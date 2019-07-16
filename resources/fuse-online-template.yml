@@ -4,16 +4,16 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: syndesis
+  name: fuse-ignite-1.6
 #
 # Template flavor:
 #
 # Allow localhost refs: false
 # Use docker images: false
-# Syndesis Tag: latest
+# Syndesis Tag: 1.6
 # Prometheus Tag: v2.1.0
 # Postgresql Tag: 9.5
-# OAuthProxy Tag: v4.0.0
+# OAuthProxy Tag: v1.1.0
 #
   labels:
     app: syndesis
@@ -86,10 +86,6 @@ parameters:
   name: DEMO_DATA_ENABLED
   required: true
   value: "false"
-- description: Registry from where to fetch Syndesis images
-  displayName: Syndesis Image Registry
-  name: SYNDESIS_REGISTRY
-  value: 'docker.io'
 - description: Should deployment of integrations be enabled?
   displayName: Enable Integration Deployment
   name: CONTROLLERS_INTEGRATION_ENABLED
@@ -97,7 +93,7 @@ parameters:
 - description: Namespace containing image streams
   displayName: Image Stream Namespace
   name: IMAGE_STREAM_NAMESPACE
-  value: ''
+  value: 'fuse-ignite'
 - description: Secret to use to encrypt oauth cookies
   displayName: OAuth Cookie Secret
   name: OAUTH_COOKIE_SECRET
@@ -121,6 +117,7 @@ parameters:
 - description: Volume space available for Meta data, e.g. 512Mi, 2Gi.
   displayName: Meta Volume Capacity
   name: META_VOLUME_CAPACITY
+  required: true
   value: 1Gi
   required: true
 - description: Maximum amount of memory the syndesis-meta service might use.
@@ -132,16 +129,6 @@ parameters:
   displayName: Memory Limit
   name: SERVER_MEMORY_LIMIT
   value: 800Mi
-  required: true
-- description: Maximum amount of memory the data virtualization service might use.
-  displayName: Memory Limit
-  name: KOMODO_MEMORY_LIMIT
-  value: 1024Mi
-  required: true
-- description: Set to 0 to disable data virtualization, set to 1 to enable data virtualization.
-  displayName: Enable data virtualization
-  name: DATAVIRT_ENABLED
-  value: "0"
   required: true
 - description: Maximum number of integrations single user can create
   displayName: Maximum number of integrations
@@ -178,144 +165,6 @@ parameters:
 message: |-
   Syndesis is deployed to ${ROUTE_HOSTNAME}.
 objects:
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: syndesis-server
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: syndesis-server
-  spec:
-    tags:
-    - from:
-        kind: DockerImage
-        name: ${SYNDESIS_REGISTRY}/syndesis/syndesis-server:latest
-      importPolicy:
-        scheduled: true
-      name: "latest"
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: syndesis-ui
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: syndesis-ui
-  spec:
-    tags:
-    - from:
-        kind: DockerImage
-        name: ${SYNDESIS_REGISTRY}/syndesis/syndesis-ui:latest
-      importPolicy:
-        scheduled: true
-      name: "latest"
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: syndesis-meta
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: syndesis-meta
-  spec:
-    tags:
-    - from:
-        kind: DockerImage
-        name: ${SYNDESIS_REGISTRY}/syndesis/syndesis-meta:latest
-      importPolicy:
-        scheduled: true
-      name: "latest"
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: oauth-proxy
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: syndesis-oauthproxy
-  spec:
-    tags:
-    - from:
-        kind: DockerImage
-        name: quay.io/openshift/origin-oauth-proxy:v4.0.0
-      importPolicy:
-        scheduled: true
-      name: "v4.0.0"
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: prometheus
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: syndesis-prometheus
-  spec:
-    tags:
-    - from:
-        kind: DockerImage
-        name: ${SYNDESIS_REGISTRY}/prom/prometheus:v2.1.0
-      importPolicy:
-        scheduled: true
-      name: "v2.1.0"
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: komodo-server
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: komodo-server
-  spec:
-    tags:
-    - from:
-        kind: DockerImage
-        name: ${SYNDESIS_REGISTRY}/teiid/komodo-server:latest
-      importPolicy:
-        scheduled: true
-      name: "latest"
-
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: postgres_exporter
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: syndesis-db-metrics
-  spec:
-    tags:
-    - from:
-        kind: DockerImage
-        name: ${SYNDESIS_REGISTRY}/wrouesnel/postgres_exporter:v0.4.7
-      importPolicy:
-        scheduled: true
-      name: "v0.4.7"
-
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: syndesis-s2i
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: s2i-java
-  spec:
-    tags:
-    - from:
-        kind: DockerImage
-        name: ${SYNDESIS_REGISTRY}/syndesis/syndesis-s2i:latest
-      importPolicy:
-        scheduled: true
-      name: "latest"
 
 - apiVersion: v1
   kind: Secret
@@ -347,9 +196,9 @@ objects:
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
   stringData:
-    syndesis: "latest"
+    syndesis: "1.3"
     postgresql: "9.5"
-    oauthproxy: "v4.0.0"
+    oauthproxy: "v1.1.0"
     prometheus: "v2.1.0"
     params: |-
       ROUTE_HOSTNAME=${ROUTE_HOSTNAME}
@@ -365,7 +214,6 @@ objects:
       POSTGRESQL_SAMPLEDB_PASSWORD=${POSTGRESQL_SAMPLEDB_PASSWORD}
       TEST_SUPPORT_ENABLED=${TEST_SUPPORT_ENABLED}
       DEMO_DATA_ENABLED=${DEMO_DATA_ENABLED}
-      SYNDESIS_REGISTRY=${SYNDESIS_REGISTRY}
       CONTROLLERS_INTEGRATION_ENABLED=${CONTROLLERS_INTEGRATION_ENABLED}
       IMAGE_STREAM_NAMESPACE=${IMAGE_STREAM_NAMESPACE}
       OAUTH_COOKIE_SECRET=${OAUTH_COOKIE_SECRET}
@@ -473,7 +321,7 @@ objects:
         - syndesis-ui
         from:
           kind: ImageStreamTag
-          name: syndesis-ui:latest
+          name: fuse-ignite-ui:1.6
           namespace: ${IMAGE_STREAM_NAMESPACE}
       type: ImageChange
 
@@ -502,21 +350,113 @@ objects:
           "baseJSONInspectionServiceUrl": "https://${ROUTE_HOSTNAME}/api/v1/atlas/json/",
           "disableMappingPreviewMode": false
         },
-        "datavirt": {
-          "dvUrl": "/vdb-builder/v1/",
-          "enabled": ${DATAVIRT_ENABLED}
-        },
         "features" : {
           "logging": false
         },
         "branding": {
-          "appName": "Syndesis",
+          "appName": "Fuse Online",
           "favicon32": "/favicon-32x32.png",
           "favicon16": "/favicon-16x16.png",
           "touchIcon": "/apple-touch-icon.png",
-          "productBuild": false
+          "productBuild": true
        }
       }
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: jboss-amq-63
+    labels:
+      app: syndesis
+      syndesis.io/app: syndesis
+      syndesis.io/component: amq
+  spec:
+    tags:
+    - from:
+        kind: DockerImage
+        name: registry.access.redhat.com/jboss-amq-6/amq63-openshift:1.3
+      importPolicy:
+        scheduled: true
+      name: "1.3"
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: The broker's OpenWire port.
+    labels:
+      application: broker
+    name: broker-amq-tcp
+  spec:
+    ports:
+    - name: openwire
+      port: 61616
+      targetPort: 61616
+    - name: stomp
+      port: 61613
+      targetPort: 61613
+    selector:
+      syndesis.io/example: broker-amq
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: syndesis
+      syndesis.io/app: syndesis
+      syndesis.io/example: broker-amq
+    name: broker-amq
+  spec:
+    replicas: 0
+    selector:
+      app: syndesis
+      syndesis.io/app: syndesis
+      syndesis.io/example: broker-amq
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: syndesis
+          syndesis.io/app: syndesis
+          syndesis.io/example: broker-amq
+        name: broker-amq
+      spec:
+        containers:
+        - env:
+          - name: AMQ_USER
+            value: amq
+          - name: AMQ_PASSWORD
+            value: topSecret
+          - name: AMQ_TRANSPORTS
+            value: openwire,stomp
+          image: jboss-amq-63
+          imagePullPolicy: Always
+          name: broker-amq
+          ports:
+          - containerPort: 8778
+            name: jolokia
+            protocol: TCP
+          - containerPort: 61616
+            name: tcp
+            protocol: TCP
+          - containerPort: 61613
+            name: stomp
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - /opt/amq/bin/readinessProbe.sh
+        terminationGracePeriodSeconds: 60
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - broker-amq
+        from:
+          kind: ImageStreamTag
+          name: jboss-amq-63:1.3
+      type: ImageChange
+    - type: ConfigChange
 
 - apiVersion: v1
   kind: ConfigMap
@@ -562,41 +502,9 @@ objects:
         GRANT ALL PRIVILEGES ON DATABASE sampledb to sampledb;
       EOF
       psql -d sampledb -U sampledb <<'EOF'
-        CREATE SCHEMA AUTHORIZATION sampledb;
         CREATE TABLE IF NOT EXISTS contact (first_name VARCHAR, last_name VARCHAR, company VARCHAR, lead_source VARCHAR, create_date DATE);
         INSERT INTO contact VALUES ('Joe','Jackson','Red Hat','db',current_timestamp);
         CREATE TABLE IF NOT EXISTS todo (id SERIAL PRIMARY KEY, task VARCHAR, completed INTEGER);
-        CREATE TABLE IF NOT EXISTS winelist (id SERIAL PRIMARY KEY, wine VARCHAR, price INTEGER, year INTEGER, gws INTEGER, ci VARCHAR, nbj INTEGER, productcode VARCHAR, pricebookentryid VARCHAR);
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (42,'Abreu Vineyard, Las Posadas, Howell Mountain',275,2013,9802,'B',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (91,'Araujo Estate, Eisele Vineyard Cabernet Sauvignon, Napa Valley',499,2015,9728,'C+',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (99,'Aubert Wines, Ritchie Vineyard Chardonnay, White, Sonoma Coast',225,2015,9717,'A+',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (88,'Bond Estates, Pluribus Red, Napa Valley', 410,2015,9729,'A+',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (33,'Cayuse Vineyards, Bionic Frog Syrah, Walla Walla Valley',280,2010,9817,'A+',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (69,'Chappellet, Pritchard Hill Cabernet Sauvignon, Napa Valley',239,2014,9748,'A+',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (20,'Colgin Cellars, Tychson Hill Vineyard Cabernet Sauvignon, Napa Valley',355,2002,9848,'A+',4) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (72,'Dalla Valle Vineyards, Maya, Napa Valley',489,2013,974,'A',4) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (5, 'Dana Estates, Lotus Vineyard Cabernet Sauvignon, Napa Valley',299,2010,9887,'A',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (17,'Dominus Estate, Christian Moueix, Napa Valley',108,2013,9854,'A',6) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (11,'Dunn Vineyards, Trailer Vineyard Cabernet Sauvignon, Howell Mountain',375,2013,986,'A',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (35,'Futo Estate, 5500 Sld - Cabernet Sauvignon, Stags Leap District',325,2015,9813,'A+',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES ( 9,'Harlan Estate, Napa Valley',365,2001,9873,'A+',6) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (48,'Joseph Phelps Vineyards, Insignia, Napa Valley',264,1991,9794,'A',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (27,'Kapcsandy Family Winery, State Lane Vineyard Grand-Vin Cabernet Sauvignon, Napa Valley',129,2015,9841,'A+',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (10,'Kongsgaard, The Judge Chardonnay, White, Napa Valley',246,2005,9865,'A',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (65,'Larkmead Vineyards, The Lark Cabernet Sauvignon, Napa Valley',118,2013,9755,'A',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (59,'Lokoya Winery, Mount Veeder Cabernet Sauvignon, Napa Valley',313,2015,977,'A',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (77,'Paul Hobbs, Beckstoffer To Kalon Vineyard Cabernet Sauvignon, Oakville',359,2013,9738,'A',4) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (86,'Peter Michael Winery, Point Rouge Chardonnay, White, Sonoma County',185,2008,9732,'A',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (73,'Promontory, Napa Valley',595,2013,974,'A',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (81,'Quilceda Creek, Cabernet Sauvignon, Columbia Valley',169,2009,9736,'A+',5) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (36,'Ridge Vineyards, Monte Bello, Santa Cruz Mountains',150,2015,9809,'A',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (46,'Scarecrow, Cabernet Sauvignon, Rutherford',440,2014,9796,'A+',4) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (47,'Schrader Cellars, Beckstoffer Las Piedras Vineyard Colesworthy Cabernet Sauvignon, Napa Valley', 69,2013,9794,'A',4) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (04,'Screaming Eagle, Cabernet Sauvignon, Napa Valley', 2660,2010,9905,'A',6) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (71,'Sloan, Proprietary Red, Rutherford',230,2013,9741,'A+',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (93,'Spottswoode, Family Estate Grown Cabernet Sauvignon, St Helena',149,2013,9726,'A',9) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (66,'Verite, Le Desir, Sonoma County',269,2007,9753,'A',3) ON CONFLICT (id) DO NOTHING;
-        INSERT INTO winelist (id, wine, price,year, gws, ci, nbj) VALUES (100,'Continuum, Proprietary Red, Oakville',185,2007,9716,'A+',3) ON CONFLICT (id) DO NOTHING;
         CREATE OR REPLACE FUNCTION add_lead(
           first_and_last_name varchar,
           company varchar,
@@ -676,6 +584,11 @@ objects:
       port: 5432
       protocol: TCP
       targetPort: 5432
+    - name: metrics
+      nodePort: 0
+      port: 9187
+      protocol: TCP
+      targetPort: 9187
     selector:
       app: syndesis
       syndesis.io/app: syndesis
@@ -802,7 +715,7 @@ objects:
             initialDelaySeconds: 30
           ports:
           - containerPort: 9187
-            name: metrics
+            name: prometheus
           resources:
             limits:
               memory: 256Mi
@@ -860,6 +773,10 @@ objects:
       protocol: TCP
       targetPort: 8080
       name: http
+    - port: 8181
+      protocol: TCP
+      targetPort: 8181
+      name: prometheus
     selector:
       app: syndesis
       syndesis.io/app: syndesis
@@ -919,10 +836,6 @@ objects:
             value: /deployments/ext
           - name: JAVA_OPTIONS
             value: "-Djava.net.preferIPv4Stack=true -Duser.home=/tmp"
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
           image: ' '
 
           imagePullPolicy: IfNotPresent
@@ -944,8 +857,6 @@ objects:
           - containerPort: 8080
             name: http
             protocol: TCP
-          - containerPort: 8181
-            name: metrics
           - containerPort: 9779
             name: prometheus
             protocol: TCP
@@ -978,7 +889,7 @@ objects:
         - syndesis-meta
         from:
           kind: ImageStreamTag
-          name: syndesis-meta:latest
+          name: fuse-ignite-meta:1.6
           namespace: ${IMAGE_STREAM_NAMESPACE}
       type: ImageChange
 
@@ -1065,9 +976,9 @@ objects:
     strategy:
       resources:
         limits:
-          memory: "512Mi"
+          memory: "256Mi"
         requests:
-          memory: "40Mi"
+          memory: "20Mi"
       type: Recreate
     template:
       metadata:
@@ -1087,25 +998,17 @@ objects:
             - --upstream=http://syndesis-server/api/
             - --upstream=http://syndesis-server/mapper/
             - --upstream=http://syndesis-ui/
-            - --upstream=http://komodo-server/vdb-builder/
             - --tls-cert=/etc/tls/private/tls.crt
             - --tls-key=/etc/tls/private/tls.key
             - --cookie-secret=$(OAUTH_COOKIE_SECRET)
             - --pass-access-token
             - --skip-provider-button
-            - '--skip-auth-regex=/api/v1/swagger.*'
-            - '--skip-auth-regex=/api/v1/index.html'
-            - '--skip-auth-regex=/api/v1/credentials/callback'
-            - '--skip-auth-regex=/service-worker.js'
-            - '--skip-auth-regex=/manifest.json'
-            - '--skip-auth-regex=/asset-manifest.json'
-            - '--skip-auth-regex=/precache-manifest.json'
-            - '--skip-auth-regex=/atlasmap.*'
-            - '--skip-auth-regex=/apicurio.*'
-            - '--skip-auth-regex=/favicon.ico'
-            - '--skip-auth-regex=/icons[^/]*'
-            - '--skip-auth-regex=/static[^/]*'
-            - '--skip-auth-regex=/precache-manifest.*.js'
+            - --skip-auth-regex=/logout
+            - --skip-auth-regex=/[^/]+\.(png|jpg|eot|svg|ttf|woff|woff2)
+            - --skip-auth-regex=/api/v1/swagger.*
+            - --skip-auth-regex=/api/v1/index.html
+            - --skip-auth-regex=/api/v1/credentials/callback
+            - --skip-auth-regex=/api/v1/version
             - --skip-auth-preflight
             - --openshift-ca=/etc/pki/tls/certs/ca-bundle.crt
             - --openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -1141,9 +1044,9 @@ objects:
             name: syndesis-oauthproxy-tls
           resources:
             limits:
-              memory: 512Mi
+              memory: 200Mi
             requests:
-              memory: 40Mi
+              memory: 20Mi
         serviceAccountName: syndesis-oauth-client
         volumes:
         - name: syndesis-oauthproxy-tls
@@ -1156,7 +1059,7 @@ objects:
         - syndesis-oauthproxy
         from:
           kind: ImageStreamTag
-          name: oauth-proxy:v4.0.0
+          name: oauth-proxy:v1.1.0
           namespace: ${IMAGE_STREAM_NAMESPACE}
       type: ImageChange
 
@@ -1194,6 +1097,10 @@ objects:
       protocol: TCP
       targetPort: 8080
       name: http
+    - port: 8181
+      protocol: TCP
+      targetPort: 8181
+      name: prometheus
     selector:
       app: syndesis
       syndesis.io/app: syndesis
@@ -1287,8 +1194,6 @@ objects:
           ports:
           - containerPort: 8080
             name: http
-          - containerPort: 8181
-            name: metrics
           - containerPort: 9779
             name: prometheus
           - containerPort: 8778
@@ -1318,7 +1223,7 @@ objects:
         - syndesis-server
         from:
           kind: ImageStreamTag
-          name: syndesis-server:latest
+          name: fuse-ignite-server:1.6
           namespace: ${IMAGE_STREAM_NAMESPACE}
       type: ImageChange
 
@@ -1353,7 +1258,7 @@ objects:
       # See the License for the specific language governing permissions and
       # limitations under the License.
       #
-
+      
       startDelaySecs: 5
       ssl: false
       blacklistObjectNames: ["java.lang:*"]
@@ -1465,7 +1370,8 @@ objects:
               context: $1
               type: context
           type: GAUGE
-
+      
+      
       # Route level
         - pattern: 'org.apache.camel<context=([^,]+), type=routes, name=([^,]+)><>ExchangesCompleted'
           name: org.apache.camel.ExchangesCompleted
@@ -1563,7 +1469,7 @@ objects:
               route: $2
               type: routes
           type: GAUGE
-
+      
       # Processor level
         - pattern: 'org.apache.camel<context=([^,]+), type=processors, name=([^,]+)><>ExchangesCompleted'
           name: org.apache.camel.ExchangesCompleted
@@ -1661,7 +1567,7 @@ objects:
               processor: $2
               type: processors
           type: COUNTER
-
+      
       # Consumers
         - pattern: 'org.apache.camel<context=([^,]+), type=consumers, name=([^,]+)><>InflightExchanges'
           name: org.apache.camel.InflightExchanges
@@ -1671,7 +1577,7 @@ objects:
               consumer: $2
               type: consumers
           type: GAUGE
-
+      
       # Services
         - pattern: 'org.apache.camel<context=([^,]+), type=services, name=([^,]+)><>MaxDuration'
           name: org.apache.camel.MaxDuration
@@ -1892,6 +1798,7 @@ objects:
               type: $2
               service: $3
               port: $4
+      
 
 - apiVersion: v1
   kind: ConfigMap
@@ -1945,153 +1852,25 @@ objects:
           enabled: true
         public-api:
           enabled: true
-        knative:
-          enabled: false
+      maven:
+        repositories:
+          01_maven_central: https://repo1.maven.org/maven2
+          02_redhat_ea_repository: https://maven.repository.redhat.com/ga/
+          03_jboss_ea: https://repository.jboss.org/
       openshift:
         apiBaseUrl: ${OPENSHIFT_MASTER}/oapi/v1
         namespace: ${NAMESPACE}
         imageStreamNamespace: ${IMAGE_STREAM_NAMESPACE}
-        builderImageStreamTag: syndesis-s2i:latest
+        builderImageStreamTag: fuse-ignite-s2i:1.6
         deploymentMemoryRequestMi: 200
         deploymentMemoryLimitMi: 512
         mavenOptions: "-XX:+UseG1GC -XX:+UseStringDeduplication -Xmx310m"
-        integrationLivenessProbeInitialDelaySeconds: 120
       dao:
         kind: jsondb
       controllers:
         maxIntegrationsPerUser: ${MAX_INTEGRATIONS_PER_USER}
         maxDeploymentsPerUser: ${MAX_INTEGRATIONS_PER_USER}
         integrationStateCheckInterval: ${INTEGRATION_STATE_CHECK_INTERVAL}
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: komodo-server
-    name: komodo-server
-  spec:
-    ports:
-    - port: 80
-      protocol: TCP
-      targetPort: 8080
-    selector:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/component: komodo-server
-- apiVersion: apps.openshift.io/v1
-  kind: DeploymentConfig
-  metadata:
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: komodo-server
-    name: komodo-server
-  spec:
-    replicas: ${{DATAVIRT_ENABLED}}
-    selector:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/component: komodo-server
-    strategy:
-      resources:
-        limits:
-          memory: "256Mi"
-        requests:
-          memory: "20Mi"
-      type: Recreate
-    template:
-      metadata:
-        labels:
-          app: syndesis
-          syndesis.io/app: syndesis
-          syndesis.io/type: infrastructure
-          syndesis.io/component: komodo-server
-      spec:
-        serviceAccountName: syndesis-server
-        containers:
-        - name: komodo-server
-          env:
-          - name: JAVA_APP_DIR
-            value: /deployments
-          - name: JAVA_OPTIONS
-            value: "-Djava.net.preferIPv4Stack=true -Duser.home=/tmp -Djava.net.preferIPv4Addresses=true -Dlog4j.logger.org.apache.http=DEBUG -Dkomodo.user=${POSTGRESQL_USER} -Dkomodo.password=${POSTGRESQL_PASSWORD} -Dkomodo.connectionUrl=jdbc:postgresql://syndesis-db:5432/${POSTGRESQL_DATABASE} -Dkomodo.binaryStoreUrl=jdbc:postgresql://syndesis-db:5432/${POSTGRESQL_DATABASE} -Dkomodo.connectionDriver=org.postgresql.Driver"
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: GC_MAX_METASPACE_SIZE
-            value: "512"
-          - name: BUILD_IMAGE_STREAM
-            value: syndesis-s2i:latest
-          - name: POSTGRESQL_PASSWORD
-            value: ${POSTGRESQL_PASSWORD}
-          - name: POSTGRESQL_USER
-            value: ${POSTGRESQL_USER}
-          - name: POSTGRESQL_DATABASE
-            value: ${POSTGRESQL_DATABASE}
-          image: ' '
-
-          imagePullPolicy: IfNotPresent
-          livenessProbe:
-            httpGet:
-              port: 8080
-              path: "/vdb-builder/v1/swagger.json"
-              httpHeaders:
-              - name: Accept
-                value: 'application/json'
-            initialDelaySeconds: 60
-            periodSeconds: 20
-            timeoutSeconds: 5
-          readinessProbe:
-            httpGet:
-              path: "/vdb-builder/v1/swagger.json"
-              port: 8080
-              httpHeaders:
-              - name: Accept
-                value: 'application/json'
-            initialDelaySeconds: 60
-            periodSeconds: 20
-            timeoutSeconds: 5
-          ports:
-          - containerPort: 8080
-            name: http
-          - containerPort: 9779
-            name: prometheus
-          - containerPort: 8778
-            name: jolokia
-          workingDir: /deployments
-          volumeMounts:
-          - name: config-volume
-            mountPath: /deployments/config
-          # Set QoS class to "Guaranteed" (limits == requests)
-          # This doesn't work on OSO as there is a fixed ratio
-          # from limit to resource (80% currently). 'requests' is ignored there
-          resources:
-            limits:
-              memory: ${KOMODO_MEMORY_LIMIT}
-              cpu: 750m
-            requests:
-              memory: 256Mi
-        volumes:
-        - name: config-volume
-          configMap:
-            name: syndesis-server-config
-    triggers:
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - komodo-server
-        from:
-          kind: ImageStreamTag
-          name: komodo-server:latest
-          namespace: ${IMAGE_STREAM_NAMESPACE}
-      type: ImageChange
-
-    - type: ConfigChange
-
 - apiVersion: v1
   kind: Service
   metadata:
@@ -2213,8 +1992,6 @@ objects:
                 value: syndesis-db
               - name: TODO_DB_NAME
                 value: sampledb
-              - name: TODO_DB_SCHEMA
-                value: sampledb
               - name: TODO_DB_USER
                 value: sampledb
               - name: TODO_DB_PASS
@@ -2248,111 +2025,32 @@ objects:
             kind: ImageStreamTag
             name: todo:latest
         type: ImageChange
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    name: syndesis-editor
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: syndesis-server
-  rules:
-  - apiGroups:
-    - ""
-    resources:
-    - pods
-    - services
-    - endpoints
-    - persistentvolumeclaims
-    - configmaps
-    - secrets
-    - serviceaccounts
-    verbs: [ get, list, create, update, delete, deletecollection, watch ]
-  - apiGroups:
-    - ""
-    resources:
-    - pods/log
-    verbs: [ get ]
-  - apiGroups:
-    - ""
-    resources:
-    - replicationcontrollers
-    - replicationcontrollers/scale
-    - replicationcontrollers/status
-    verbs: [ get, list, create, update, delete, deletecollection, watch ]
-  - apiGroups:
-    - ""
-    - build.openshift.io
-    resources:
-    - builds
-    - buildconfigs
-    - builds/details
-    - buildconfigs/webhooks
-    - buildconfigs/instantiatebinary
-    - builds/log
-    verbs: [ get, list, create, update, delete, deletecollection, watch ]
-  - apiGroups:
-    - ""
-    - apps.openshift.io
-    resources:
-    - deploymentconfigs
-    - deploymentconfigs/scale
-    verbs: [ get, list, create, update, delete, deletecollection, watch, patch ]
-  - apiGroups:
-    - ""
-    - apps.openshift.io
-    resources:
-    - deploymentconfigrollbacks
-    - deploymentconfigs/instantiate
-    - deploymentconfigs/rollback
-    verbs: [ create ]
-  - apiGroups:
-    - ""
-    - apps.openshift.io
-    resources:
-    - deploymentconfigs/log
-    - deploymentconfigs/status
-    verbs: [ get, list, watch ]
-  - apiGroups:
-    - ""
-    - image.openshift.io
-    resources:
-    - imagestreams
-    - imagestreamimages
-    - imagestreammappings
-    - imagestreams/secrets
-    - imagestreamtags
-    verbs: [ get, list, create, update, delete, deletecollection, watch, patch ]
-  - apiGroups:
-    - ""
-    - image.openshift.io
-    resources:
-    - imagestreams/status
-    - imagestreamimports
-    verbs: [ get, list, watch ]
-  - apiGroups:
-    - route.openshift.io
-    resources:
-    - routes
-    verbs: [ get, list, create, update, delete, deletecollection, watch, patch ]
-
-- apiVersion: rbac.authorization.k8s.io/v1
+- apiVersion: authorization.openshift.io/v1
   kind: RoleBinding
   metadata:
-    name: syndesis-server-editor
+    name: syndesis:editors
     labels:
       app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
-      syndesis.io/component: syndesis-server
+  roleRef:
+    name: edit
   subjects:
   - kind: ServiceAccount
     name: syndesis-server
+- apiVersion: authorization.openshift.io/v1
+  kind: RoleBinding
+  metadata:
+    name: syndesis:viewers
+    labels:
+      app: syndesis
+      syndesis.io/app: syndesis
+      syndesis.io/type: infrastructure
   roleRef:
-    kind: Role
-    name: syndesis-editor
-    apiGroup: rbac.authorization.k8s.io
+    name: view
+  subjects:
+  - kind: ServiceAccount
+    name: syndesis-prometheus
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
@@ -2625,12 +2323,12 @@ objects:
   - apiVersion: v1
     kind: Pod
     metadata:
-      name: syndesis-upgrade-latest
+      name: syndesis-upgrade-1.3-13
     spec:
       serviceAccountName: syndesis-operator
       containers:
       - name: upgrade
-        image: ${UPGRADE_REGISTRY}/syndesis/syndesis-upgrade:latest
+        image: ${UPGRADE_REGISTRY}/fuse7/fuse-ignite-upgrade:1.3-13
         env:
           - name: SYNDESIS_UPGRADE_PROJECT
             valueFrom:
@@ -2648,135 +2346,6 @@ objects:
         persistentVolumeClaim:
           claimName: syndesis-upgrade
       restartPolicy: Never
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: komodo-server
-    name: komodo-server
-  spec:
-    ports:
-    - port: 80
-      protocol: TCP
-      targetPort: 8080
-    selector:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/component: komodo-server
-- apiVersion: apps.openshift.io/v1
-  kind: DeploymentConfig
-  metadata:
-    labels:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/type: infrastructure
-      syndesis.io/component: komodo-server
-    name: komodo-server
-  spec:
-    replicas: ${{DATAVIRT_ENABLED}}
-    selector:
-      app: syndesis
-      syndesis.io/app: syndesis
-      syndesis.io/component: komodo-server
-    strategy:
-      resources:
-        limits:
-          memory: "256Mi"
-        requests:
-          memory: "20Mi"
-      type: Recreate
-    template:
-      metadata:
-        labels:
-          app: syndesis
-          syndesis.io/app: syndesis
-          syndesis.io/type: infrastructure
-          syndesis.io/component: komodo-server
-      spec:
-        serviceAccountName: syndesis-server
-        containers:
-        - name: komodo-server
-          env:
-          - name: JAVA_APP_DIR
-            value: /deployments
-          - name: JAVA_OPTIONS
-            value: "-Djava.net.preferIPv4Stack=true -Duser.home=/tmp -Djava.net.preferIPv4Addresses=true -Dlog4j.logger.org.apache.http=DEBUG -Dkomodo.user=${POSTGRESQL_USER} -Dkomodo.password=${POSTGRESQL_PASSWORD} -Dkomodo.connectionUrl=jdbc:postgresql://syndesis-db:5432/${POSTGRESQL_DATABASE} -Dkomodo.binaryStoreUrl=jdbc:postgresql://syndesis-db:5432/${POSTGRESQL_DATABASE} -Dkomodo.connectionDriver=org.postgresql.Driver"
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: GC_MAX_METASPACE_SIZE
-            value: "512"
-          - name: BUILD_IMAGE_STREAM
-            value: syndesis-s2i:latest
-          - name: POSTGRESQL_PASSWORD
-            value: ${POSTGRESQL_PASSWORD}
-          - name: POSTGRESQL_USER
-            value: ${POSTGRESQL_USER}
-          - name: POSTGRESQL_DATABASE
-            value: ${POSTGRESQL_DATABASE}
-          image: ' '
-
-          imagePullPolicy: IfNotPresent
-          livenessProbe:
-            httpGet:
-              port: 8080
-              path: "/vdb-builder/v1/swagger.json"
-              httpHeaders:
-              - name: Accept
-                value: 'application/json'
-            initialDelaySeconds: 60
-            periodSeconds: 20
-            timeoutSeconds: 5
-          readinessProbe:
-            httpGet:
-              path: "/vdb-builder/v1/swagger.json"
-              port: 8080
-              httpHeaders:
-              - name: Accept
-                value: 'application/json'
-            initialDelaySeconds: 60
-            periodSeconds: 20
-            timeoutSeconds: 5
-          ports:
-          - containerPort: 8080
-            name: http
-          - containerPort: 9779
-            name: prometheus
-          - containerPort: 8778
-            name: jolokia
-          workingDir: /deployments
-          volumeMounts:
-          - name: config-volume
-            mountPath: /deployments/config
-          # Set QoS class to "Guaranteed" (limits == requests)
-          # This doesn't work on OSO as there is a fixed ratio
-          # from limit to resource (80% currently). 'requests' is ignored there
-          resources:
-            limits:
-              memory: ${KOMODO_MEMORY_LIMIT}
-              cpu: 750m
-            requests:
-              memory: 256Mi
-        volumes:
-        - name: config-volume
-          configMap:
-            name: syndesis-server-config
-    triggers:
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - komodo-server
-        from:
-          kind: ImageStreamTag
-          name: komodo-server:latest
-          namespace: ${IMAGE_STREAM_NAMESPACE}
-      type: ImageChange
-
-    - type: ConfigChange
 kind: List
 items:
 - apiVersion: v1
